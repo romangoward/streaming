@@ -1,0 +1,27 @@
+---
+- name: streaming
+  hosts: localhost
+  connection: localhost
+  tasks:
+    - name: run nginx
+      tags: nginx
+      docker_container:
+        name: nginx-streaming
+        state: started
+        image: nginx:latest
+        ports:
+            - 8080:80
+        volumes:
+            - ./streaming.conf:/etc/nginx/conf.d/streaming.conf:ro
+            - ./index.html:/var/www/html/index.html:ro
+            - ./tmp/streaming:/var/www/html/tmp/streaming:ro
+
+    - name: run ffmpeg sidecar
+      tags: ffmpeg
+      docker_container:
+        name: ffmpeg-streaming
+        state: started
+        image: jrottenberg/ffmpeg:latest
+        command: -y -i rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mov -f image2 -update 1 /tmp/streaming/image.jpg
+        volumes:
+            - ./tmp/streaming:/tmp/streaming:rw
